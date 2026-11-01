@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <avr/pgmspace.h>
 
+
+#define SILENCE 0
 #define NOTE_B0  31
 #define NOTE_C1  33
 #define NOTE_CS1 35
@@ -93,6 +95,29 @@
 
 #define RYTHM_PIN A2
 #define NO_MUSIC_DELAY_IN_MS 1000
+#define SIZE_OF_LUT 4 //lookup table size 
+
+//counter_step = 1000 * Nech * (Fsig/Fpwm) = 1000 * Nech * (Fsig/(Fcpu/256))
+#define CONVERT_FREQ_TO_COUNTER(NOTE_FREQ) \
+ ( (uint16_t)((uint32_t)(NOTE_FREQ) * 1000UL * (uint32_t)(SIZE_OF_LUT) * 256UL / (uint32_t)(F_CPU)) )
+
+const uint8_t square50LUT[SIZE_OF_LUT]= {
+
+  0, 0, 127, 127
+};
+
+
+typedef struct 
+{
+  const uint8_t * shape;
+  uint8_t index;
+  uint16_t counter;
+  uint16_t counter_step;
+}Voice;
+
+Voice simpleVoice;
+Voice otherVoice;
+
 // notes in the melody:
 const int melody[] PROGMEM = {
 
@@ -105,38 +130,126 @@ const int noteDurations[] PROGMEM = {
   250, 125, 125, 250, 250, 250, 250, 250
 };
 
+void initVoice(Voice * voice, uint16_t note_freq){ 
+  voice->shape = square50LUT;
+  voice->index = 0;
+  voice->counter = 0; 
+  voice->counter_step = CONVERT_FREQ_TO_COUNTER(note_freq);
+}
+
 void setup() {
 
+  DDRB |= _BV(PB0);
+  DDRB |= _BV(PB1);
+
+  //shut down interrupts while we fiddle about with the timer
+  cli();
+
+  TCCR0B &= ~0b00000111; //Turn off the timer before changing anything
+  TCNT0 = 0; //Timer wounter back to 0
+
+  //set the comparison, we will flip the bit every time this is hit
+  // (actually this will set TOP of the timer and we flip on the overflow )
+
+  OCR0A = 200;
+
+  //Enable the overflow interrupt
+  TIMSK0 |= _BV(TOIE0);
+
+  //start the timer
+  TCCR0A = 0b10000011; 
+  TCCR0B = 0b00000000;
+  
+  sei(); //We have to enable interrupts here even if they were disabled coming in, otherwise its not going to do anything 
+
+  initVoice(&otherVoice, NOTE_C4);
 }
+
+
 void loop() {
 
   // iterate over the notes of the melody:
 
-  for (int thisNote = 0; thisNote < 8; thisNote++) {
+  //for (int thisNote = 0; thisNote < 8; thisNote++) {
     // Formula is: f(a) = (a/682) + 0.5 with the analog value, to have following specification
     // at a = 0, rythm_coeff = 0.5
     // at a = 1023, rythm_coeff = 2
     // To avoid the use of floating point, we multiply everything by 100, so we have:
 
-    uint16_t rythm_coeff = ((uint32_t)100*analogRead(RYTHM_PIN)/ 682) + 50;
+       /*  uint16_t rythm_coeff = ((uint32_t)100*analogRead(RYTHM_PIN)/ 682) + 50;
+        
+        uint16_t notePitch = pgm_read_word(&melody[thisNote]); 
+        uint16_t noteDuration = pgm_read_word(&noteDurations[thisNote]*rythm_coeff); 
+        tone(PB0, notePitch, noteDuration);
+
+
+
+        // to distinguish the notes, set a minimum time between them.
+
+        // the note's duration + 30% seems to work well:
+
+        int pauseBetweenNotes = noteDuration * 13/10;
+
+        delay(pauseBetweenNotes);
+
+        // stop the tone playing:
+
+        noTone(PB0); */
+
+    // Regarding to Default configuration & compilation: Internal clock (p.31), System clock prescaler (p.32), Register CLKPR default value (p.34),
+    // Fclk TO = F_cpu = 9.6MHz. (Cf board build. f cpu in platformio. int file).
+    // By setting PM prescaler (p.80) without prescaling (N=1). we have (Regarding the ATTiny13A datasheet p.72 Fast PUM formula) :
+    // Fpum = Fclk IO / (N*256) 9.6MH / (1+256) # 37.5KH2
+    TCCR0B |= 0b00000001;
+    for (uint8_t note = 0; note < 8; note++){
+      uint16_t notePitch =pgm_read_word(&melody[note]);
+      uint16_t noteDuration =pgm_read_word(&noteDurations[note]);
+      initVoice(&simpleVoice, notePitch);
+      delay(noteDuration);
     
-    uint16_t notePitch = pgm_read_word(&melody[thisNote]); 
-    uint16_t noteDuration = pgm_read_word(&noteDurations[thisNote]*rythm_coeff); 
-    tone(PB0, notePitch, noteDuration);
-
-    // to distinguish the notes, set a minimum time between them.
-
-    // the note's duration + 30% seems to work well:
-
-    int pauseBetweenNotes = noteDuration * 13/10;
-
-    delay(pauseBetweenNotes);
-
-    // stop the tone playing:
-
-    noTone(PB0);
-
-  }
-
-  delay(NO_MUSIC_DELAY_IN_MS);
+      
+    }
+    TCCR0B &= ~0b00000111; 
+    delay (NO_MUSIC_DELAY_IN_MS);
 }
+
+uint8_t interuptCounter = 0;
+ISR(TIM0_OVF_vect){
+  uint8_t cumulatedVoices = 0;
+  PINB = (1 << PB1); //toggle the pin on overflow
+  cumulatedVoices = simpleVoice.shape[simpleVoice.index];
+  cumulatedVoices += otherVoice.shape[otherVoice.index];
+
+  if (cumulatedVoices == 0) //silence
+  {
+    OCR0A =0;
+  }
+  else{
+    OCR0A = cumulatedVoices;
+  }
+  simpleVoice.counter+=simpleVoice.counter_step;
+
+
+  if (simpleVoice.counter>= 1000){
+    simpleVoice.counter -= 1000;
+    simpleVoice.index++;
+    simpleVoice.index %= SIZE_OF_LUT;
+  }
+  otherVoice.counter+=otherVoice.counter_step;
+
+
+  if(otherVoice.counter>= 1000){
+    otherVoice.counter -= 1000;
+    otherVoice.index++;
+    otherVoice.index %= SIZE_OF_LUT;
+  }
+  // we want the same frenquency as previously when simpleVoice.index = (simpleVoice.counter * 2) /3;
+  // our maximum is 1000 so we update our counter every 1000 * (2/3) -= 667 to have 625Hz.
+  // To create the 625Hz frequency of 625Hz, we use 4 samples (size of LUT), so the signal frequency is divived by four.
+  // So we have counter_sig  = 1000 * Nech * (Fsig/Fpwm) = (2/3) * 1000 ~=667.
+  // To retrieve Fsig we have Fsig = (Fpwn * counter_sig ) / (1000 * Ntech)) = ((2/3) *1000*37.5Hz)
+  // But, as we use the approximate value 667, we have Fsig = (667*37.5Hz) / (1000 * 4) = 6253.125Hz.
+  PINB = (1 << PB1); //toggle the pin on overflow
+}
+
+
