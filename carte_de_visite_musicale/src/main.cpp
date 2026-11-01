@@ -91,6 +91,7 @@
 #define NOTE_D8  4699
 #define NOTE_DS8 4978
 
+#define RYTHM_PIN A2
 #define NO_MUSIC_DELAY_IN_MS 1000
 // notes in the melody:
 const int melody[] PROGMEM = {
@@ -112,14 +113,15 @@ void loop() {
   // iterate over the notes of the melody:
 
   for (int thisNote = 0; thisNote < 8; thisNote++) {
+    // Formula is: f(a) = (a/682) + 0.5 with the analog value, to have following specification
+    // at a = 0, rythm_coeff = 0.5
+    // at a = 1023, rythm_coeff = 2
+    // To avoid the use of floating point, we multiply everything by 100, so we have:
 
-    // to calculate the note duration, take one second divided by the note type.
-
-    //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
-
-    //int noteDuration = 1000 / noteDurations[thisNote];
+    uint16_t rythm_coeff = ((uint32_t)100*analogRead(RYTHM_PIN)/ 682) + 50;
+    
     uint16_t notePitch = pgm_read_word(&melody[thisNote]); 
-    uint16_t noteDuration = pgm_read_word(&noteDurations[thisNote]); 
+    uint16_t noteDuration = pgm_read_word(&noteDurations[thisNote]*rythm_coeff); 
     tone(PB0, notePitch, noteDuration);
 
     // to distinguish the notes, set a minimum time between them.
