@@ -114,7 +114,7 @@ void setup() {
 
     //int noteDuration = 1000 / noteDurations[thisNote];
 
-    tone(PB0, melody[thisNote], noteDurations[thisNote]);
+    tone(PB0, melody[thisNote], 250);
 
     // to distinguish the notes, set a minimum time between them.
 
