@@ -1,0 +1,18 @@
+<circuit type="simulide_0.1">
+ 
+Ground (0 V)-4: 
+<item labelx="-16" valLabelx="0" x="-844" itemtype="Ground" hflip="1" id="Ground (0 V)-4" y="-300" objectName="Ground (0 V)-4" labely="-24" valLabely="0" Show_id="false" labelrot="0" valLabRot="0" vflip="1" rotation="0"/>
+ 
+Audio Out-2: 
+<item labelx="-12" valLabelx="0" x="-796" itemtype="AudioOut" hflip="1" id="Audio Out-2" y="-332" objectName="Audio Out-2" labely="-24" valLabely="0" Show_id="false" labelrot="0" Impedance="8" valLabRot="0" vflip="1" rotation="0"/>
+ 
+attiny13-1: 
+<item labelx="0" valLabelx="0" x="-892" itemtype="AVR" hflip="1" id="attiny13-1" y="-372" objectName="attiny13-1" labely="-20" valLabely="0" Mhz="16" Show_id="true" labelrot="0" valLabRot="0" vflip="1" rotation="0" program="carte_de_visite_musicale/carte_de_visite_musicale/.pio/build/attiny13a/firmware.hex"/>
+ 
+Connector-3: 
+<item startpinid="attiny13-1-PB0" y="-340" valLabelx="0" Show_id="false" x="-852" hflip="1" vflip="1" labelrot="0" valLabRot="0" labelx="-16" itemtype="Connector" valLabely="0" pointList="-852,-340,-812,-340" objectName="Connector-3" id="Connector-3" labely="-24" enodeid="enode-3" rotation="0" endpinid="Audio Out-2-lPin"/>
+ 
+Connector-5: 
+<item startpinid="Audio Out-2-rPin" y="-332" valLabelx="0" Show_id="false" x="-812" hflip="1" vflip="1" labelrot="0" valLabRot="0" labelx="-16" itemtype="Connector" valLabely="0" pointList="-812,-332,-844,-332,-844,-316" objectName="Connector-5" id="Connector-5" labely="-24" enodeid="enode-5" rotation="0" endpinid="Ground (0 V)-4-Gnd"/>
+ 
+</circuit>

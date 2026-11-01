@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <avr/pgmspace.h>
 
 #define NOTE_B0  31
 #define NOTE_C1  33
@@ -90,19 +91,23 @@
 #define NOTE_D8  4699
 #define NOTE_DS8 4978
 
+#define NO_MUSIC_DELAY_IN_MS 1000
 // notes in the melody:
-int melody[] = {
+const int melody[] PROGMEM = {
 
   NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
 };
 
 // note durations: 4 = quarter note, 8 = eighth note, etc.:
-int noteDurations[] = {
+const int noteDurations[] PROGMEM = {
 
   250, 125, 125, 250, 250, 250, 250, 250
 };
 
 void setup() {
+
+}
+void loop() {
 
   // iterate over the notes of the melody:
 
@@ -113,14 +118,15 @@ void setup() {
     //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
 
     //int noteDuration = 1000 / noteDurations[thisNote];
-
-    tone(PB0, melody[thisNote], 250);
+    uint16_t notePitch = pgm_read_word(&melody[thisNote]); 
+    uint16_t noteDuration = pgm_read_word(&noteDurations[thisNote]); 
+    tone(PB0, notePitch, noteDuration);
 
     // to distinguish the notes, set a minimum time between them.
 
     // the note's duration + 30% seems to work well:
 
-    int pauseBetweenNotes = noteDurations[thisNote] * 13/10;
+    int pauseBetweenNotes = noteDuration * 13/10;
 
     delay(pauseBetweenNotes);
 
@@ -129,9 +135,6 @@ void setup() {
     noTone(PB0);
 
   }
-}
 
-void loop() {
-
-  // no need to repeat the melody.
+  delay(NO_MUSIC_DELAY_IN_MS);
 }
