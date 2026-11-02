@@ -125,13 +125,25 @@ const int melody[] PROGMEM = {
   NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
 };
 
-// note durations: 4 = quarter note, 8 = eighth note, etc.:
-//note durarations : 2= DELAY_UPDATE_TICK_IN_MS *2 = 250 = quarter note 
-//                   1= DELAY_UPDATE_TICK_IN_MS *1 = 125 = eighth note
+// note Durations: 4 = DELAY_UPDATE_TICK_IN_MS * 4 ~= 248 ~= quarter note (Crotchet),
+//                 2 = DELAY_UPDATE_TICK_IN_MS * 2 ~= 124 ~= eighth note (Quaver),
+//                 1 = DELAY_UPDATE_TICK_IN_MS * 1 ~= 125 ~= sixteenth note (Semiquaver),
+  
 const int noteDurations[] PROGMEM = {
 
-  2, 1, 1, 2, 2, 2, 2, 2
+  4, 2, 2, 4, 4, 4, 4, 4 //Duration: 28
 };
+
+// notes in the bassline:
+const int bassline[] PROGMEM = {
+  NOTE_C3, NOTE_G2, SILENCE, NOTE_G2, NOTE_B2};
+
+// note Durations: 4 = DELAY_UPDATE_TICK_IN_MS * 4 ~= 248 ~= quarter note (Crotchet),
+//                 2 = DELAY_UPDATE_TICK_IN_MS * 2 ~= 124 ~= eighth note (Quaver),
+//                 1 = DELAY_UPDATE_TICK_IN_MS * 1 ~= 125 ~= sixteenth note (Semiquaver),
+  
+const int basslineDurations[] PROGMEM = {
+  2, 3, 4, 5, 6}; //Duration: 28
 
 void initVoice(Voice * voice, uint16_t note_freq){ 
   voice->shape = square50LUT;
@@ -210,21 +222,28 @@ void loop() {
 
     uint8_t melodyNote = 0;
     uint8_t basslineNote = 0; 
+
+    uint8_t melodyTempoCounter = 0;
+    uint8_t basslineTempoCounter = 0;
+
     while(melodyNote < 8){
-      if (tempo_counter % melodyNoteDuration == 0){
+      if (melodyTempoCounter % melodyNoteDuration == 0){
         uint16_t notePitch =pgm_read_word(&melody[melodyNote]);
         melodyNoteDuration =pgm_read_word(&noteDurations[melodyNote]);
         initVoice(&simpleVoice, notePitch);
+        melodyTempoCounter = 0;
         melodyNote++;
       }
-      if (tempo_counter % basslineNoteDuration == 0){
+      if (basslineTempoCounter % basslineNoteDuration == 0){
         uint16_t notePitch =pgm_read_word(&melody[basslineNote]);
         basslineNoteDuration =pgm_read_word(&noteDurations[basslineNote]);
         initVoice(&otherVoice, notePitch);
+        basslineTempoCounter = 0;
         basslineNote++;
       }
       delay(DELAY_UPDATE_TICK_IN_MS);
-      tempo_counter++;
+      melodyTempoCounter++;
+      basslineTempoCounter++;
     }
    
     
