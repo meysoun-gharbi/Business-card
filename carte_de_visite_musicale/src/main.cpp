@@ -96,6 +96,7 @@
 #define RYTHM_PIN A2
 #define NO_MUSIC_DELAY_IN_MS 1000
 #define SIZE_OF_LUT 4 //lookup table size 
+#define DELAY_UPDATE_TICK_IN_MS 125
 
 //counter_step = 1000 * Nech * (Fsig/Fpwm) = 1000 * Nech * (Fsig/(Fcpu/256))
 #define CONVERT_FREQ_TO_COUNTER(NOTE_FREQ) \
@@ -125,9 +126,11 @@ const int melody[] PROGMEM = {
 };
 
 // note durations: 4 = quarter note, 8 = eighth note, etc.:
+//note durarations : 2= DELAY_UPDATE_TICK_IN_MS *2 = 250 = quarter note 
+//                   1= DELAY_UPDATE_TICK_IN_MS *1 = 125 = eighth note
 const int noteDurations[] PROGMEM = {
 
-  250, 125, 125, 250, 250, 250, 250, 250
+  2, 1, 1, 2, 2, 2, 2, 2
 };
 
 void initVoice(Voice * voice, uint16_t note_freq){ 
@@ -164,7 +167,7 @@ void setup() {
 
   initVoice(&otherVoice, NOTE_C4);
 }
-
+uint8_t tempo_counter = 0;
 
 void loop() {
 
@@ -201,14 +204,31 @@ void loop() {
     // By setting PM prescaler (p.80) without prescaling (N=1). we have (Regarding the ATTiny13A datasheet p.72 Fast PUM formula) :
     // Fpum = Fclk IO / (N*256) 9.6MH / (1+256) # 37.5KH2
     TCCR0B |= 0b00000001;
-    for (uint8_t note = 0; note < 8; note++){
-      uint16_t notePitch =pgm_read_word(&melody[note]);
-      uint16_t noteDuration =pgm_read_word(&noteDurations[note]);
-      initVoice(&simpleVoice, notePitch);
-      delay(noteDuration);
-    
-      
+
+    uint16_t melodyNoteDuration = 1; 
+    uint16_t basslineNoteDuration = 1;
+
+    uint8_t melodyNote = 0;
+    uint8_t basslineNote = 0; 
+    while(melodyNote < 8){
+      if (tempo_counter % melodyNoteDuration == 0){
+        uint16_t notePitch =pgm_read_word(&melody[melodyNote]);
+        melodyNoteDuration =pgm_read_word(&noteDurations[melodyNote]);
+        initVoice(&simpleVoice, notePitch);
+        melodyNote++;
+      }
+      if (tempo_counter % basslineNoteDuration == 0){
+        uint16_t notePitch =pgm_read_word(&melody[basslineNote]);
+        basslineNoteDuration =pgm_read_word(&noteDurations[basslineNote]);
+        initVoice(&otherVoice, notePitch);
+        basslineNote++;
+      }
+      delay(DELAY_UPDATE_TICK_IN_MS);
+      tempo_counter++;
     }
+   
+    
+
     TCCR0B &= ~0b00000111; 
     delay (NO_MUSIC_DELAY_IN_MS);
 }
