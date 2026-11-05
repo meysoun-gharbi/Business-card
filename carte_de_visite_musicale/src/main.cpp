@@ -111,9 +111,16 @@ const uint8_t square50LUT[SIZE_OF_LUT]= {
 typedef struct 
 {
   const uint8_t * shape;
-  uint8_t index;
+  uint8_t shapeIndex;
   uint16_t counter;
   uint16_t counter_step;
+  uint8_t tempoCounter;
+  uint16_t currentNoteDuration;
+  const int* melody;                
+  const int* noteDurationTable;
+  uint8_t noteIndex;
+
+
 }Voice;
 
 Voice simpleVoice;
@@ -145,11 +152,23 @@ const int bassline[] PROGMEM = {
 const int basslineDurations[] PROGMEM = {
   2, 3, 4, 5, 6}; //Duration: 28
 
-void initVoice(Voice * voice, uint16_t note_freq){ 
+void initVoice(Voice * voice, const int* givenMelody, const int* givenNoteDurations){ 
   voice->shape = square50LUT;
-  voice->index = 0;
+  voice->shapeIndex = 0;
   voice->counter = 0; 
+  voice->counter_step = 0;
+  voice->tempoCounter = 0;
+  voice->currentNoteDuration  = 1;
+  voice->melody = givenMelody; 
+  voice->noteDurationTable = givenNoteDurations;
+  voice->noteIndex = 0;
+
+
+}
+void setNote (Voice * voice, uint16_t note_freq){
   voice->counter_step = CONVERT_FREQ_TO_COUNTER(note_freq);
+  voice->shapeIndex = 0;
+  voice->counter = 0; 
 }
 
 void setup() {
@@ -177,11 +196,11 @@ void setup() {
   
   sei(); //We have to enable interrupts here even if they were disabled coming in, otherwise its not going to do anything 
 
-  initVoice(&otherVoice, NOTE_C4);
 }
 uint8_t tempo_counter = 0;
 
 void loop() {
+
 
   // iterate over the notes of the melody:
 
@@ -217,33 +236,29 @@ void loop() {
     // Fpum = Fclk IO / (N*256) 9.6MH / (1+256) # 37.5KH2
     TCCR0B |= 0b00000001;
 
-    uint16_t melodyNoteDuration = 1; 
-    uint16_t basslineNoteDuration = 1;
+    initVoice(&simpleVoice, melody, noteDurations);
+    initVoice(&otherVoice, bassline, basslineDurations);  
 
-    uint8_t melodyNote = 0;
-    uint8_t basslineNote = 0; 
-
-    uint8_t melodyTempoCounter = 0;
-    uint8_t basslineTempoCounter = 0;
-
-    while(melodyNote < 8){
-      if (melodyTempoCounter % melodyNoteDuration == 0){
-        uint16_t notePitch =pgm_read_word(&melody[melodyNote]);
-        melodyNoteDuration =pgm_read_word(&noteDurations[melodyNote]);
-        initVoice(&simpleVoice, notePitch);
-        melodyTempoCounter = 0;
-        melodyNote++;
+    while(simpleVoice.noteIndex < 8){
+      if (simpleVoice.tempoCounter >= simpleVoice.currentNoteDuration){
+        uint16_t notePitch =pgm_read_word(&simpleVoice.melody[simpleVoice.noteIndex]);
+        simpleVoice.currentNoteDuration = pgm_read_word(&simpleVoice.noteDurationTable[simpleVoice.noteIndex]);
+        setNote(&simpleVoice, notePitch);
+        simpleVoice.tempoCounter = 0;
+        simpleVoice.noteIndex++;
       }
-      if (basslineTempoCounter % basslineNoteDuration == 0){
-        uint16_t notePitch =pgm_read_word(&melody[basslineNote]);
-        basslineNoteDuration =pgm_read_word(&noteDurations[basslineNote]);
-        initVoice(&otherVoice, notePitch);
-        basslineTempoCounter = 0;
-        basslineNote++;
+      simpleVoice.tempoCounter++;
+
+       if (otherVoice.tempoCounter >= otherVoice.currentNoteDuration){
+        uint16_t notePitch =pgm_read_word(&otherVoice.melody[otherVoice.noteIndex]);
+        otherVoice.currentNoteDuration = pgm_read_word(&otherVoice.noteDurationTable[otherVoice.noteIndex]);
+        setNote(&otherVoice, notePitch);
+        otherVoice.tempoCounter = 0;
+        otherVoice.noteIndex++;
       }
+      otherVoice.tempoCounter++;      
       delay(DELAY_UPDATE_TICK_IN_MS);
-      melodyTempoCounter++;
-      basslineTempoCounter++;
+      
     }
    
     
@@ -256,8 +271,8 @@ uint8_t interuptCounter = 0;
 ISR(TIM0_OVF_vect){
   uint8_t cumulatedVoices = 0;
   PINB = (1 << PB1); //toggle the pin on overflow
-  cumulatedVoices = simpleVoice.shape[simpleVoice.index];
-  cumulatedVoices += otherVoice.shape[otherVoice.index];
+  cumulatedVoices = simpleVoice.shape[simpleVoice.shapeIndex];
+  cumulatedVoices += otherVoice.shape[otherVoice.shapeIndex];
 
   if (cumulatedVoices == 0) //silence
   {
@@ -271,16 +286,16 @@ ISR(TIM0_OVF_vect){
 
   if (simpleVoice.counter>= 1000){
     simpleVoice.counter -= 1000;
-    simpleVoice.index++;
-    simpleVoice.index %= SIZE_OF_LUT;
+    simpleVoice.shapeIndex++;
+    simpleVoice.shapeIndex %= SIZE_OF_LUT;
   }
   otherVoice.counter+=otherVoice.counter_step;
 
 
   if(otherVoice.counter>= 1000){
     otherVoice.counter -= 1000;
-    otherVoice.index++;
-    otherVoice.index %= SIZE_OF_LUT;
+    otherVoice.shapeIndex++;
+    otherVoice.shapeIndex %= SIZE_OF_LUT;
   }
   // we want the same frenquency as previously when simpleVoice.index = (simpleVoice.counter * 2) /3;
   // our maximum is 1000 so we update our counter every 1000 * (2/3) -= 667 to have 625Hz.
