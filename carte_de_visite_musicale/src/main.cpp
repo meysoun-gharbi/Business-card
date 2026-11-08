@@ -1,6 +1,8 @@
-#include <Arduino.h>
+#include <avr/io.h>
+#include <util/delay.h>
+#include <avr/interrupt.h>
 #include <avr/pgmspace.h>
-
+#include <stdint.h>
 
 #define SILENCE 0
 #define NOTE_B0  31
@@ -162,20 +164,18 @@ void initVoice(Voice * voice, uint16_t note_freq){
   voice->counter_step = CONVERT_FREQ_TO_COUNTER(note_freq);
 }
 
-void setup() {
+int main(void) {
 
   DDRB |= _BV(PB0);
   DDRB |= _BV(PB1);
   DDRB |= _BV(PB2);
-  //shut down interrupts while we fiddle about with the timer
-  cli();
+ 
 
  
 
   //set the comparison, we will flip the bit every time this is hit
   // (actually this will set TOP of the timer and we flip on the overflow )
 
-  OCR0A = 200;
 
   //Enable the overflow interrupt
   TIMSK0 |= _BV(TOIE0);
@@ -187,90 +187,90 @@ void setup() {
   sei(); //We have to enable interrupts here even if they were disabled coming in, otherwise its not going to do anything 
 
   initVoice(&otherVoice, NOTE_C4);
-}
-uint8_t tempo_counter = 0;
-
-void loop() {
-
-  // iterate over the notes of the melody:
-
-  //for (int thisNote = 0; thisNote < 8; thisNote++) {
-    // Formula is: f(a) = (a/682) + 0.5 with the analog value, to have following specification
-    // at a = 0, rythm_coeff = 0.5
-    // at a = 1023, rythm_coeff = 2
-    // To avoid the use of floating point, we multiply everything by 100, so we have:
-
-       /*  uint16_t rythm_coeff = ((uint32_t)100*analogRead(RYTHM_PIN)/ 682) + 50;
-        
-        uint16_t notePitch = pgm_read_word(&melody[thisNote]); 
-        uint16_t noteDuration = pgm_read_word(&noteDurations[thisNote]*rythm_coeff); 
-        tone(PB0, notePitch, noteDuration);
 
 
 
-        // to distinguish the notes, set a minimum time between them.
+  while(1) {
 
-        // the note's duration + 30% seems to work well:
+    // iterate over the notes of the melody:
 
-        int pauseBetweenNotes = noteDuration * 13/10;
+    //for (int thisNote = 0; thisNote < 8; thisNote++) {
+      // Formula is: f(a) = (a/682) + 0.5 with the analog value, to have following specification
+      // at a = 0, rythm_coeff = 0.5
+      // at a = 1023, rythm_coeff = 2
+      // To avoid the use of floating point, we multiply everything by 100, so we have:
 
-        delay(pauseBetweenNotes);
+        /*  uint16_t rythm_coeff = ((uint32_t)100*analogRead(RYTHM_PIN)/ 682) + 50;
+          
+          uint16_t notePitch = pgm_read_word(&melody[thisNote]); 
+          uint16_t noteDuration = pgm_read_word(&noteDurations[thisNote]*rythm_coeff); 
+          tone(PB0, notePitch, noteDuration);
 
-        // stop the tone playing:
 
-        noTone(PB0); */
 
-    // Regarding to Default configuration & compilation: Internal clock (p.31), System clock prescaler (p.32), Register CLKPR default value (p.34),
-    // Fclk TO = F_cpu = 9.6MHz. (Cf board build. f cpu in platformio. int file).
-    // By setting PM prescaler (p.80) without prescaling (N=1). we have (Regarding the ATTiny13A datasheet p.72 Fast PUM formula) :
-    // Fpum = Fclk IO / (N*256) 9.6MH / (1+256) # 37.5KH2
-    TCCR0B |= 0b00000001;
+          // to distinguish the notes, set a minimum time between them.
 
-    uint16_t melodyNoteDuration = 1; 
-    uint16_t basslineNoteDuration = 1;
-    uint16_t chordNoteDuration = 1;
+          // the note's duration + 30% seems to work well:
 
-    uint8_t melodyNote = 0;
-    uint8_t basslineNote = 0; 
-    uint8_t chordNote = 0;
+          int pauseBetweenNotes = noteDuration * 13/10;
 
-    uint8_t melodyTempoCounter = 0;
-    uint8_t basslineTempoCounter = 0;
-    uint8_t chordTempoCounter = 0; 
+          delay(pauseBetweenNotes);
 
-    while(melodyNote < 8){
-      if (melodyTempoCounter  % melodyNoteDuration ==0 ){
-        uint16_t notePitch =pgm_read_word(&melody[melodyNote]);
-        melodyNoteDuration =pgm_read_byte(&noteDurations[melodyNote]);
-        initVoice(&simpleVoice, notePitch);
-        melodyTempoCounter = 0;
-        melodyNote++;
+          // stop the tone playing:
+
+          noTone(PB0); */
+
+      // Regarding to Default configuration & compilation: Internal clock (p.31), System clock prescaler (p.32), Register CLKPR default value (p.34),
+      // Fclk TO = F_cpu = 9.6MHz. (Cf board build. f cpu in platformio. int file).
+      // By setting PM prescaler (p.80) without prescaling (N=1). we have (Regarding the ATTiny13A datasheet p.72 Fast PUM formula) :
+      // Fpum = Fclk IO / (N*256) 9.6MH / (1+256) # 37.5KH2
+      TCCR0B |= 0b00000001;
+
+      uint16_t melodyNoteDuration = 1; 
+      uint16_t basslineNoteDuration = 1;
+      uint16_t chordNoteDuration = 1;
+
+      uint8_t melodyNote = 0;
+      uint8_t basslineNote = 0; 
+      uint8_t chordNote = 0;
+
+      uint8_t melodyTempoCounter = 0;
+      uint8_t basslineTempoCounter = 0;
+      uint8_t chordTempoCounter = 0; 
+
+      while(melodyNote < 8){
+        if (melodyTempoCounter  % melodyNoteDuration ==0 ){
+          uint16_t notePitch =pgm_read_word(&melody[melodyNote]);
+          melodyNoteDuration =pgm_read_byte(&noteDurations[melodyNote]);
+          initVoice(&simpleVoice, notePitch);
+          melodyTempoCounter = 0;
+          melodyNote++;
+        }
+        if (basslineTempoCounter % basslineNoteDuration ==0 ){
+          uint16_t notePitch =pgm_read_word(&melody[basslineNote]);
+          basslineNoteDuration =pgm_read_byte(&noteDurations[basslineNote]);
+          initVoice(&otherVoice, notePitch);
+          basslineTempoCounter = 0;
+          basslineNote++;
+        }
+        if (chordTempoCounter % chordNoteDuration == 0){
+          uint16_t notePitch =pgm_read_word(&chord[chordNote]);
+          basslineNoteDuration =pgm_read_byte(&chordDurations[chordNote]);
+          initVoice(&thirdVoice, notePitch);
+          chordTempoCounter = 0;
+          chordNote++;
+        }
+        PINB = (1 << PB2);
+        _delay_ms(DELAY_UPDATE_TICK_IN_MS - 36);
+        melodyTempoCounter++;
+        basslineTempoCounter++;
+        chordTempoCounter++;
       }
-      if (basslineTempoCounter % basslineNoteDuration ==0 ){
-        uint16_t notePitch =pgm_read_word(&melody[basslineNote]);
-        basslineNoteDuration =pgm_read_byte(&noteDurations[basslineNote]);
-        initVoice(&otherVoice, notePitch);
-        basslineTempoCounter = 0;
-        basslineNote++;
-      }
-      if (chordTempoCounter % chordNoteDuration == 0){
-        uint16_t notePitch =pgm_read_word(&chord[chordNote]);
-        basslineNoteDuration =pgm_read_byte(&chordDurations[chordNote]);
-        initVoice(&thirdVoice, notePitch);
-        chordTempoCounter = 0;
-        chordNote++;
-      }
-      PINB = (1 << PB2);
-      delay(DELAY_UPDATE_TICK_IN_MS - 36);
-      melodyTempoCounter++;
-      basslineTempoCounter++;
-      chordTempoCounter++;
     }
-   
-   
+    
 
-    TCCR0B &= ~0b00000111; 
-    delay (NO_MUSIC_DELAY_IN_MS);
+      TCCR0B &= ~0b00000111; 
+      _delay_ms (NO_MUSIC_DELAY_IN_MS);
 }
 
 
