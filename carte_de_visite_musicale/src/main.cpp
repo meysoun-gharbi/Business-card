@@ -4,96 +4,108 @@
 #include <avr/pgmspace.h>
 #include <stdint.h>
 
-
 #define SILENCE 0
-#define NOTE_A0 3
-#define NOTE_AS0 3
-#define NOTE_B0 3
-#define NOTE_C1 3
-#define NOTE_CS1 4
-#define NOTE_D1 4
-#define NOTE_DS1 4
-#define NOTE_E1 4
-#define NOTE_F1 5
-#define NOTE_FS1 5
-#define NOTE_G1 5
-#define NOTE_GS1 6
-#define NOTE_A1 6
-#define NOTE_AS1 6
-#define NOTE_B1 7
-#define NOTE_C2 7
-#define NOTE_CS2 7
-#define NOTE_D2 8
-#define NOTE_DS2 8
-#define NOTE_E2 9
-#define NOTE_F2 9
-#define NOTE_FS2 10
-#define NOTE_G2 10
-#define NOTE_GS2 11
-#define NOTE_A2 12
-#define NOTE_AS2 12
-#define NOTE_B2 13
-#define NOTE_C3 14
-#define NOTE_CS3 15
-#define NOTE_D3 16
-#define NOTE_DS3 17
-#define NOTE_E3 18
-#define NOTE_F3 19
-#define NOTE_FS3 20
-#define NOTE_G3 21
-#define NOTE_GS3 22
-#define NOTE_A3 23
-#define NOTE_AS3 25
-#define NOTE_B3 26
-#define NOTE_C4 28
-#define NOTE_CS4 30
-#define NOTE_D4 31
-#define NOTE_DS4 33
-#define NOTE_E4 35
-#define NOTE_F4 37
-#define NOTE_FS4 39
-#define NOTE_G4 42
-#define NOTE_GS4 44
-#define NOTE_A4 47
-#define NOTE_AS4 50
-#define NOTE_B4 53
-#define NOTE_C5 56
-#define NOTE_CS5 59
-#define NOTE_D5 63
-#define NOTE_DS5 66
-#define NOTE_E5 70
-#define NOTE_F5 75
-#define NOTE_FS5 79
-#define NOTE_G5 84
-#define NOTE_GS5 89
-#define NOTE_A5 94
-#define NOTE_AS5 99
-#define NOTE_B5 105
-#define NOTE_C6 112
-#define NOTE_CS6 118
-#define NOTE_D6 125
-#define NOTE_DS6 133
-#define NOTE_E6 141
-#define NOTE_F6 149
-#define NOTE_FS6 158
-#define NOTE_G6 167
-#define NOTE_GS6 177
-#define NOTE_A6 188
-#define NOTE_AS6 199
-#define NOTE_B6 211
-#define NOTE_C7 223
-#define NOTE_CS7 237
-#define NOTE_D7 251
-#define NOTE_DS7 265
-#define NOTE_E7 281
-#define NOTE_F7 298
-#define NOTE_FS7 316
-#define NOTE_G7 335
-#define NOTE_GS7 354
-#define NOTE_A7 375
-#define NOTE_AS7 398
-#define NOTE_B7 421
-#define NOTE_C8 447
+#define TIMING_OFFSET 2
+#define TIMING_STEP   2
+#define NOTE_OFFSET   7
+#define OCTAVE_OFFSET 3
+
+#define NOTE_C0 0xFF
+#define NOTE_CS0 0xFF
+#define NOTE_D0 0xFF
+#define NOTE_DS0 0xFF
+#define NOTE_E0 0xFF
+#define NOTE_F0 0xFF
+#define NOTE_FS0 0xFF
+#define NOTE_G0 0xFF
+#define NOTE_GS0 0xFF
+#define NOTE_A0 0xFF
+#define NOTE_AS0 0xFF
+#define NOTE_B0 0xFF
+#define NOTE_C1 0xFF
+#define NOTE_CS1 0xFF
+#define NOTE_D1 0xFF
+#define NOTE_DS1 0xFF
+#define NOTE_E1 0xFF
+#define NOTE_F1 0xFF
+#define NOTE_FS1 0xFF
+#define NOTE_G1 0xFF
+#define NOTE_GS1 0xFF
+#define NOTE_A1 0xFF
+#define NOTE_AS1 0xFF
+#define NOTE_B1 0xFF
+#define NOTE_C2 0xFF
+#define NOTE_CS2 0xFF
+#define NOTE_D2 0xFF
+#define NOTE_DS2 0xFF
+#define NOTE_E2 0xFF
+#define NOTE_F2 0xFF
+#define NOTE_FS2 0xFF
+#define NOTE_G2 0xFF
+#define NOTE_GS2 0xFF
+#define NOTE_A2 0xFF
+#define NOTE_AS2 0xFF
+#define NOTE_B2 0xFF
+#define NOTE_C3 0xFF
+#define NOTE_CS3 0xFF
+#define NOTE_D3 0xFF
+#define NOTE_DS3 0xFF
+#define NOTE_E3 0xFF
+#define NOTE_F3 0xFF
+#define NOTE_FS3 0xFF
+#define NOTE_G3 0x00
+#define NOTE_GS3 0x10
+#define NOTE_A3 0x20
+#define NOTE_AS3 0x30
+#define NOTE_B3 0x40
+#define NOTE_C4 0x50
+#define NOTE_CS4 0x60
+#define NOTE_D4 0x70
+#define NOTE_DS4 0x80
+#define NOTE_E4 0x90
+#define NOTE_F4 0xA0
+#define NOTE_FS4 0xB0
+#define NOTE_G4 0x04
+#define NOTE_GS4 0x14
+#define NOTE_A4 0x24
+#define NOTE_AS4 0x34
+#define NOTE_B4 0x44
+#define NOTE_C5 0x54
+#define NOTE_CS5 0x64
+#define NOTE_D5 0x74
+#define NOTE_DS5 0x84
+#define NOTE_E5 0x94
+#define NOTE_F5 0xA4
+#define NOTE_FS5 0xB4
+#define NOTE_G5 0x08
+#define NOTE_GS5 0x18
+#define NOTE_A5 0x28
+#define NOTE_AS5 0x38
+#define NOTE_B5 0x48
+#define NOTE_C6 0x58
+#define NOTE_CS6 0x68
+#define NOTE_D6 0x78
+#define NOTE_DS6 0x88
+#define NOTE_E6 0x98
+#define NOTE_F6 0xA8
+#define NOTE_FS6 0xB8
+#define NOTE_G6 0x0C
+#define NOTE_GS6 0x1C
+#define NOTE_A6 0x2C
+#define NOTE_AS6 0x3C
+#define NOTE_B6 0x4C
+#define NOTE_C7 0x5C
+#define NOTE_CS7 0x6C
+#define NOTE_D7 0x7C
+#define NOTE_DS7 0x8C
+#define NOTE_E7 0x9C
+#define NOTE_F7 0xAC
+#define NOTE_FS7 0xBC
+#define NOTE_G7 0xFF
+#define NOTE_GS7 0xFF
+#define NOTE_A7 0xFF
+#define NOTE_AS7 0xFF
+#define NOTE_B7 0xFF
 
 
 #define RYTHM_PIN A2
@@ -101,7 +113,12 @@
 #define SIZE_OF_LUT 4 //lookup table size 
 #define DELAY_UPDATE_TICK_IN_MS 125
 
+#define PRECALCULATED_COUNTER_OCTAVE 6
+#define TEMPO_FROM_NOTE_VALUE(Value)(((Value & 0x003) * TIMING_STEP) + TIMING_OFFSET)
 
+const uint8_t precalculated_counter [] PROGMEM = {
+  112, 118, 125, 133, 141, 149, 158, 167, 177, 188, 199, 211,
+};
 
 const uint8_t square50LUT[SIZE_OF_LUT]= {
 
@@ -123,44 +140,87 @@ Voice thirdVoice;
 // notes in the melody:
 const int melody[] PROGMEM = {
 
-  NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4, NOTE_C4
+  NOTE_E5 | 0, NOTE_E5 | 0, SILENCE | 0, NOTE_E5 | 0, SILENCE | 0, NOTE_C5 | 0, NOTE_E5 | 1, NOTE_G5 | 1, SILENCE | 1, NOTE_G4 | 1, 
+  SILENCE | 1, NOTE_C4 | 1, SILENCE | 0, NOTE_G4 | 1, SILENCE | 0, NOTE_E4 | 1, SILENCE | 0, NOTE_A4 | 1, NOTE_B4 | 1, NOTE_AS4| 0,
+  NOTE_A4 | 1, NOTE_G4 | 0, NOTE_E5 | 0, NOTE_G5 | 1, NOTE_A5 | 1, NOTE_F5 | 0, NOTE_G5 | 0, SILENCE | 0, NOTE_E5 | 1, NOTE_C5 | 0,
+  NOTE_D5 | 0, NOTE_B4 | 1, SILENCE | 0, SILENCE | 1, NOTE_G5 | 0, NOTE_FS5| 0, NOTE_F5 | 0, SILENCE | 1, NOTE_E5 | 1, SILENCE | 0,
+  NOTE_GS5| 0, NOTE_A4 | 0, NOTE_C5 | 0, SILENCE | 0, NOTE_A4 | 0, NOTE_C5 | 0, NOTE_D5 | 0, SILENCE | 1, NOTE_G5 | 1, NOTE_FS5 | 0,
+  NOTE_F5 | 0, NOTE_DS5| 1, NOTE_E5 | 0, SILENCE | 0, NOTE_C6 | 1, NOTE_C6 | 0, NOTE_C6 | 1, SILENCE | 1,         
+  SILENCE | 1, NOTE_G5 | 0, NOTE_FS5| 0, NOTE_F5 | 0, NOTE_DS6| 1, NOTE_E5 | 0, SILENCE | 0, SILENCE | 0, NOTE_A4 | 1, NOTE_C5 | 0,
+  SILENCE | 0, NOTE_A4 | 0, NOTE_C5 | 0, NOTE_D5 | 0, SILENCE | 1, NOTE_G5 | 0, NOTE_FS5| 0, SILENCE | 0, NOTE_DS5| 1, NOTE_E5 | 0,
+  SILENCE | 0, NOTE_E5 | 1, SILENCE | 1, SILENCE | 1, SILENCE | 1, SILENCE | 1, SILENCE | 1, SILENCE | 1, SILENCE | 1, 
 };
 
 // note Durations: 4 = DELAY_UPDATE_TICK_IN_MS * 4 ~= 248 ~= quarter note (Crotchet),
 //                 2 = DELAY_UPDATE_TICK_IN_MS * 2 ~= 124 ~= eighth note (Quaver),
 //                 1 = DELAY_UPDATE_TICK_IN_MS * 1 ~= 125 ~= sixteenth note (Semiquaver),
   
-const uint8_t noteDurations[] PROGMEM = {
 
-  4, 2, 2, 4, 4, 4, 4, 4, 4  //Duration: 28
-};
 
 // notes in the bassline:
-const uint16_t bassline[] PROGMEM = {
-  NOTE_C3, NOTE_G2, SILENCE, NOTE_G2, NOTE_B2};
+  
+const uint8_t bassline[] PROGMEM = {
+    NOTE_FS4, 0, NOTE_FS4, 0, SILENCE, 0, NOTE_FS4, 0, SILENCE, 0, NOTE_FS4, 0, NOTE_FS4, 1, NOTE_B4, 1, SILENCE, 1, NOTE_B4, 1,
+    SILENCE, 1, NOTE_E4, 1, SILENCE, 0, NOTE_C4, 1, SILENCE, 0, NOTE_G3, 1, SILENCE, 0, NOTE_C4, 1, NOTE_D4, 1, NOTE_CS4, 0,
+    NOTE_C4, 1, NOTE_C4, 0, NOTE_G4, 0, NOTE_B4, 1, NOTE_C5, 1, NOTE_A4, 0, NOTE_B4, 0, SILENCE, 0, NOTE_A4, 1, NOTE_E4, 0,
+    NOTE_F4, 0, NOTE_D4, 1, SILENCE, 0, SILENCE, 1, NOTE_E5, 0, NOTE_D5, 0, NOTE_D5, 0, NOTE_B4, 1, NOTE_C5, 0, SILENCE, 0,
+    NOTE_E4, 0, NOTE_F4, 0, NOTE_G4, 0, SILENCE, 0, NOTE_C4, 0, NOTE_E4, 0, NOTE_F4, 0, SILENCE, 1, NOTE_E5, 0, NOTE_DS5, 0,
+    NOTE_D5, 0, NOTE_B4, 1, NOTE_C5, 0,
+    SILENCE, 0, NOTE_G5, 1, NOTE_G5, 0, NOTE_G5, 1, SILENCE, 1, SILENCE, 0, NOTE_D5, 0, NOTE_DS5, 0, NOTE_D5,0,  NOTE_B4, 1,
+    NOTE_C5, 0, SILENCE, 0, NOTE_E4, 0, NOTE_F4, 0, NOTE_G4, 0, SILENCE, 0, NOTE_C4, 0, NOTE_E4, 0, NOTE_F4, 0, SILENCE, 1,
+    NOTE_GS4, 1, SILENCE, 0, NOTE_F4, 1, SILENCE, 0, NOTE_E4, 1, SILENCE, 3, SILENCE, 3, SILENCE, 3, SILENCE, 3
+};
+
 
 // note Durations: 4 = DELAY_UPDATE_TICK_IN_MS * 4 ~= 248 ~= quarter note (Crotchet),
 //                 2 = DELAY_UPDATE_TICK_IN_MS * 2 ~= 124 ~= eighth note (Quaver),
 //                 1 = DELAY_UPDATE_TICK_IN_MS * 1 ~= 125 ~= sixteenth note (Semiquaver),
   
-const uint8_t basslineDurations[] PROGMEM = {
-  2, 3, 4, 5, 6}; //Duration: 28
 
 
 
-const uint16_t chord[] PROGMEM = {
 
-  NOTE_E4, NOTE_C3, SILENCE, NOTE_E3, SILENCE
+
+
+const uint8_t chord[] PROGMEM = {
+    NOTE_D3, 0, NOTE_D3, 0, SILENCE, 0, NOTE_D3, 0, SILENCE, 0, NOTE_D3, 0, NOTE_D3, 1, NOTE_G4, 1, SILENCE, 1, NOTE_G3, 1,
+    SILENCE, 1, NOTE_G3, 1, SILENCE, 0, NOTE_E3, 1, SILENCE, 0, NOTE_C3, 0, SILENCE, 0, NOTE_F3, 1, NOTE_G3, 1, NOTE_FS3, 0,
+    NOTE_G3, 1, NOTE_E3, 0, NOTE_C4, 0, NOTE_E4, 1, NOTE_F4, 1, NOTE_D4, 1, NOTE_E4, 0, SILENCE, 0, NOTE_C4, 1, NOTE_A3, 0,
+    NOTE_B3, 0, NOTE_G3, 1, SILENCE, 0, NOTE_C3, 1, SILENCE, 0, NOTE_G3, 0, SILENCE, 1, NOTE_C4, 1, NOTE_F3, 1, SILENCE, 0,
+    NOTE_C4, 0, NOTE_C4, 1, NOTE_F3, 1, NOTE_C3, 1, SILENCE, 0, NOTE_G3, 0, SILENCE, 1,
+    NOTE_G3, 0, NOTE_C4, 0, SILENCE, 0, NOTE_F5, 1, NOTE_F5, 0, NOTE_F5, 0, NOTE_G3, 1, NOTE_C3, 1, SILENCE, 1, NOTE_G3, 0,
+    SILENCE, 1, NOTE_C4, 1, NOTE_F3, 1, SILENCE, 0, NOTE_C4, 0, NOTE_C4, 0, NOTE_F3, 1, NOTE_C3, 1, NOTE_GS3, 1, SILENCE, 0,
+    NOTE_AS3, 1, SILENCE, 0, NOTE_C4, 1, SILENCE, 0, NOTE_G3, 0, NOTE_G3, 0, NOTE_C3, 1, SILENCE, 1, SILENCE, 3, SILENCE, 3
 };
+
+
 
 const uint8_t chordDurations[] PROGMEM = {
   8, 2, 6, 4, 8}; //Duration: 28
 
 
-void initVoice(Voice * voice, uint8_t counter_step){ 
+void initVoice(Voice * voice, uint8_t note_value){ 
   voice->index = 0;
   voice->counter = 0; 
-  voice->counter_step = counter_step;
+
+  if((note_value & SILENCE ) == SILENCE){
+    voice->counter_step = 0;
+  }
+  else{
+    uint8_t absolute_note_value = ((note_value & 0xF0) >> 4) + NOTE_OFFSET;
+    uint8_t absolute_octave_value = ((note_value & 0x0C) >> 2) + OCTAVE_OFFSET;
+    if(absolute_note_value >= 12){
+      absolute_note_value %=12;
+      absolute_octave_value++;
+
+    }
+    if(absolute_octave_value >= PRECALCULATED_COUNTER_OCTAVE){
+       voice->counter_step =(uint16_t)pgm_read_byte(&precalculated_counter[absolute_note_value]) << (absolute_octave_value-PRECALCULATED_COUNTER_OCTAVE);
+    }
+    else {
+      voice->counter_step =(uint16_t)pgm_read_byte(&precalculated_counter[absolute_note_value]) >> (PRECALCULATED_COUNTER_OCTAVE-absolute_octave_value);
+    }
+  }
 }
 
 int main(void) {
@@ -185,7 +245,7 @@ int main(void) {
   
   sei(); //We have to enable interrupts here even if they were disabled coming in, otherwise its not going to do anything 
 
-  initVoice(&otherVoice, NOTE_C4);
+
 
 
 
@@ -237,25 +297,25 @@ int main(void) {
       uint8_t basslineTempoCounter = 0;
       uint8_t chordTempoCounter = 0; 
 
-      while(melodyNote < 8){
+      while(melodyNote < sizeof(melody)){
         if (melodyTempoCounter  % melodyNoteDuration ==0 ){
-          uint8_t notePitch =pgm_read_byte(&melody[melodyNote]);
-          melodyNoteDuration =pgm_read_byte(&noteDurations[melodyNote]);
-          initVoice(&simpleVoice, notePitch);
+          uint8_t noteValue = pgm_read_byte(&melody[melodyNote]);
+          melodyNoteDuration = TEMPO_FROM_NOTE_VALUE(noteValue);
+          initVoice(&simpleVoice, noteValue);
           melodyTempoCounter = 0;
           melodyNote++;
         }
         if (basslineTempoCounter % basslineNoteDuration ==0 ){
-          uint8_t notePitch =pgm_read_byte(&melody[basslineNote]);
-          basslineNoteDuration =pgm_read_byte(&noteDurations[basslineNote]);
-          initVoice(&otherVoice, notePitch);
+          uint8_t noteValue =pgm_read_byte(&melody[basslineNote]);
+          basslineNoteDuration = TEMPO_FROM_NOTE_VALUE(noteValue);
+          initVoice(&otherVoice, noteValue);
           basslineTempoCounter = 0;
           basslineNote++;
         }
         if (chordTempoCounter % chordNoteDuration == 0){
-          uint8_t notePitch =pgm_read_byte(&chord[chordNote]);
-          basslineNoteDuration =pgm_read_byte(&chordDurations[chordNote]);
-          initVoice(&thirdVoice, notePitch);
+          uint8_t noteValue =pgm_read_byte(&chord[chordNote]);
+          basslineNoteDuration = TEMPO_FROM_NOTE_VALUE(noteValue);
+          initVoice(&thirdVoice, noteValue);
           chordTempoCounter = 0;
           chordNote++;
         }
