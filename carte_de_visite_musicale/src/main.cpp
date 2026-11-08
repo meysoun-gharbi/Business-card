@@ -116,6 +116,8 @@
 #define PRECALCULATED_COUNTER_OCTAVE 6
 #define TEMPO_FROM_NOTE_VALUE(Value)(((Value & 0x003) * TIMING_STEP) + TIMING_OFFSET)
 
+#define NB_OF_VOICES 3
+
 const uint8_t precalculated_counter [] PROGMEM = {
   112, 118, 125, 133, 141, 149, 158, 167, 177, 188, 199, 211,
 };
@@ -156,7 +158,7 @@ const int melody[] PROGMEM = {
 //                 1 = DELAY_UPDATE_TICK_IN_MS * 1 ~= 125 ~= sixteenth note (Semiquaver),
   
 
-
+#if NB_OF_VOICES >=2
 // notes in the bassline:
   
 const uint8_t bassline[] PROGMEM = {
@@ -170,7 +172,7 @@ const uint8_t bassline[] PROGMEM = {
     NOTE_C5, 0, SILENCE, 0, NOTE_E4, 0, NOTE_F4, 0, NOTE_G4, 0, SILENCE, 0, NOTE_C4, 0, NOTE_E4, 0, NOTE_F4, 0, SILENCE, 1,
     NOTE_GS4, 1, SILENCE, 0, NOTE_F4, 1, SILENCE, 0, NOTE_E4, 1, SILENCE, 3, SILENCE, 3, SILENCE, 3, SILENCE, 3
 };
-
+#endif
 
 // note Durations: 4 = DELAY_UPDATE_TICK_IN_MS * 4 ~= 248 ~= quarter note (Crotchet),
 //                 2 = DELAY_UPDATE_TICK_IN_MS * 2 ~= 124 ~= eighth note (Quaver),
@@ -181,7 +183,7 @@ const uint8_t bassline[] PROGMEM = {
 
 
 
-
+#if NB_OF_VOICES >=3
 const uint8_t chord[] PROGMEM = {
     NOTE_D3, 0, NOTE_D3, 0, SILENCE, 0, NOTE_D3, 0, SILENCE, 0, NOTE_D3, 0, NOTE_D3, 1, NOTE_G4, 1, SILENCE, 1, NOTE_G3, 1,
     SILENCE, 1, NOTE_G3, 1, SILENCE, 0, NOTE_E3, 1, SILENCE, 0, NOTE_C3, 0, SILENCE, 0, NOTE_F3, 1, NOTE_G3, 1, NOTE_FS3, 0,
@@ -193,7 +195,7 @@ const uint8_t chord[] PROGMEM = {
     NOTE_AS3, 1, SILENCE, 0, NOTE_C4, 1, SILENCE, 0, NOTE_G3, 0, NOTE_G3, 0, NOTE_C3, 1, SILENCE, 1, SILENCE, 3, SILENCE, 3
 };
 
-
+#endif
 
 const uint8_t chordDurations[] PROGMEM = {
   8, 2, 6, 4, 8}; //Duration: 28
@@ -225,9 +227,9 @@ void initVoice(Voice * voice, uint8_t note_value){
 
 int main(void) {
 
-  DDRB |= _BV(PB0);
-  DDRB |= _BV(PB1);
-  DDRB |= _BV(PB2);
+  DDRB = _BV(PB0) | _BV(PB1) | _BV(PB2);
+
+  PORTB |= _BV(PB3);
  
 
  
@@ -250,6 +252,65 @@ int main(void) {
 
 
   while(1) {
+
+    if(!(PINB & _BV(PB3))){
+        TCCR0B |= 0b00000001;
+
+        uint16_t melodyNoteDuration = 1; 
+        uint8_t melodyNote = 0;
+        uint8_t melodyTempoCounter = 0;
+#if NB_OF_VOICES >=2
+        uint16_t basslineNoteDuration = 1;
+        uint8_t basslineNote = 0;
+        uint8_t basslineTempoCounter = 0;
+#endif
+#if NB_OF_VOICES >=3
+        uint16_t chordNoteDuration = 1;
+        uint8_t chordNote = 0;
+        uint8_t chordTempoCounter = 0; 
+#endif
+
+        while(melodyNote < sizeof(melody)){
+          if (melodyTempoCounter  % melodyNoteDuration ==0 ){
+            uint8_t noteValue = pgm_read_byte(&melody[melodyNote]);
+            melodyNoteDuration = TEMPO_FROM_NOTE_VALUE(noteValue);
+            initVoice(&simpleVoice, noteValue);
+            melodyTempoCounter = 0;
+            melodyNote++;
+          }melodyTempoCounter++;
+
+#if NB_OF_VOICES >=2
+          if (basslineTempoCounter % basslineNoteDuration ==0 ){
+            uint8_t noteValue =pgm_read_byte(&melody[basslineNote]);
+            basslineNoteDuration = TEMPO_FROM_NOTE_VALUE(noteValue);
+            initVoice(&otherVoice, noteValue);
+            basslineTempoCounter = 0;
+            basslineNote++;
+          }basslineTempoCounter++;
+#endif
+#if NB_OF_VOICES >=2
+          if (chordTempoCounter % chordNoteDuration == 0){
+            uint8_t noteValue =pgm_read_byte(&chord[chordNote]);
+            basslineNoteDuration = TEMPO_FROM_NOTE_VALUE(noteValue);
+            initVoice(&thirdVoice, noteValue);
+            chordTempoCounter = 0;
+            chordNote++;
+          }chordTempoCounter++;
+#endif
+          PINB = (1 << PB2);
+
+          _delay_ms(DELAY_UPDATE_TICK_IN_MS - 22);
+#if NB_OF_VOICES >=2
+          _delay_ms(DELAY_UPDATE_TICK_IN_MS - 36);
+#endif
+#if NB_OF_VOICES >=3
+          _delay_ms(DELAY_UPDATE_TICK_IN_MS - 48);
+#endif 
+          
+        
+        
+      }
+    }
 
     // iterate over the notes of the melody:
 
@@ -283,53 +344,9 @@ int main(void) {
       // Fclk TO = F_cpu = 9.6MHz. (Cf board build. f cpu in platformio. int file).
       // By setting PM prescaler (p.80) without prescaling (N=1). we have (Regarding the ATTiny13A datasheet p.72 Fast PUM formula) :
       // Fpum = Fclk IO / (N*256) 9.6MH / (1+256) # 37.5KH2
-      TCCR0B |= 0b00000001;
-
-      uint16_t melodyNoteDuration = 1; 
-      uint16_t basslineNoteDuration = 1;
-      uint16_t chordNoteDuration = 1;
-
-      uint8_t melodyNote = 0;
-      uint8_t basslineNote = 0; 
-      uint8_t chordNote = 0;
-
-      uint8_t melodyTempoCounter = 0;
-      uint8_t basslineTempoCounter = 0;
-      uint8_t chordTempoCounter = 0; 
-
-      while(melodyNote < sizeof(melody)){
-        if (melodyTempoCounter  % melodyNoteDuration ==0 ){
-          uint8_t noteValue = pgm_read_byte(&melody[melodyNote]);
-          melodyNoteDuration = TEMPO_FROM_NOTE_VALUE(noteValue);
-          initVoice(&simpleVoice, noteValue);
-          melodyTempoCounter = 0;
-          melodyNote++;
-        }
-        if (basslineTempoCounter % basslineNoteDuration ==0 ){
-          uint8_t noteValue =pgm_read_byte(&melody[basslineNote]);
-          basslineNoteDuration = TEMPO_FROM_NOTE_VALUE(noteValue);
-          initVoice(&otherVoice, noteValue);
-          basslineTempoCounter = 0;
-          basslineNote++;
-        }
-        if (chordTempoCounter % chordNoteDuration == 0){
-          uint8_t noteValue =pgm_read_byte(&chord[chordNote]);
-          basslineNoteDuration = TEMPO_FROM_NOTE_VALUE(noteValue);
-          initVoice(&thirdVoice, noteValue);
-          chordTempoCounter = 0;
-          chordNote++;
-        }
-        PINB = (1 << PB2);
-        _delay_ms(DELAY_UPDATE_TICK_IN_MS - 36);
-        melodyTempoCounter++;
-        basslineTempoCounter++;
-        chordTempoCounter++;
-      }
-    }
-    
-
-      TCCR0B &= ~0b00000111; 
-      _delay_ms (NO_MUSIC_DELAY_IN_MS);
+      
+      TCCR0B &= ~0b00000111;
+  }
 }
 
 
