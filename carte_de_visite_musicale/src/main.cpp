@@ -4,105 +4,104 @@
 #include <avr/pgmspace.h>
 #include <stdint.h>
 
+
 #define SILENCE 0
-#define NOTE_B0  31
-#define NOTE_C1  33
-#define NOTE_CS1 35
-#define NOTE_D1  37
-#define NOTE_DS1 39
-#define NOTE_E1  41
-#define NOTE_F1  44
-#define NOTE_FS1 46
-#define NOTE_G1  49
-#define NOTE_GS1 52
-#define NOTE_A1  55
-#define NOTE_AS1 58
-#define NOTE_B1  62
-#define NOTE_C2  65
-#define NOTE_CS2 69
-#define NOTE_D2  73
-#define NOTE_DS2 78
-#define NOTE_E2  82
-#define NOTE_F2  87
-#define NOTE_FS2 93
-#define NOTE_G2  98
-#define NOTE_GS2 104
-#define NOTE_A2  110
-#define NOTE_AS2 117
-#define NOTE_B2  123
-#define NOTE_C3  131
-#define NOTE_CS3 139
-#define NOTE_D3  147
-#define NOTE_DS3 156
-#define NOTE_E3  165
-#define NOTE_F3  175
-#define NOTE_FS3 185
-#define NOTE_G3  196
-#define NOTE_GS3 208
-#define NOTE_A3  220
-#define NOTE_AS3 233
-#define NOTE_B3  247
-#define NOTE_C4  262
-#define NOTE_CS4 277
-#define NOTE_D4  294
-#define NOTE_DS4 311
-#define NOTE_E4  330
-#define NOTE_F4  349
-#define NOTE_FS4 370
-#define NOTE_G4  392
-#define NOTE_GS4 415
-#define NOTE_A4  440
-#define NOTE_AS4 466
-#define NOTE_B4  494
-#define NOTE_C5  523
-#define NOTE_CS5 554
-#define NOTE_D5  587
-#define NOTE_DS5 622
-#define NOTE_E5  659
-#define NOTE_F5  698
-#define NOTE_FS5 740
-#define NOTE_G5  784
-#define NOTE_GS5 831
-#define NOTE_A5  880
-#define NOTE_AS5 932
-#define NOTE_B5  988
-#define NOTE_C6  1047
-#define NOTE_CS6 1109
-#define NOTE_D6  1175
-#define NOTE_DS6 1245
-#define NOTE_E6  1319
-#define NOTE_F6  1397
-#define NOTE_FS6 1480
-#define NOTE_G6  1568
-#define NOTE_GS6 1661
-#define NOTE_A6  1760
-#define NOTE_AS6 1865
-#define NOTE_B6  1976
-#define NOTE_C7  2093
-#define NOTE_CS7 2217
-#define NOTE_D7  2349
-#define NOTE_DS7 2489
-#define NOTE_E7  2637
-#define NOTE_F7  2794
-#define NOTE_FS7 2960
-#define NOTE_G7  3136
-#define NOTE_GS7 3322
-#define NOTE_A7  3520
-#define NOTE_AS7 3729
-#define NOTE_B7  3951
-#define NOTE_C8  4186
-#define NOTE_CS8 4435
-#define NOTE_D8  4699
-#define NOTE_DS8 4978
+#define NOTE_A0 3
+#define NOTE_AS0 3
+#define NOTE_B0 3
+#define NOTE_C1 3
+#define NOTE_CS1 4
+#define NOTE_D1 4
+#define NOTE_DS1 4
+#define NOTE_E1 4
+#define NOTE_F1 5
+#define NOTE_FS1 5
+#define NOTE_G1 5
+#define NOTE_GS1 6
+#define NOTE_A1 6
+#define NOTE_AS1 6
+#define NOTE_B1 7
+#define NOTE_C2 7
+#define NOTE_CS2 7
+#define NOTE_D2 8
+#define NOTE_DS2 8
+#define NOTE_E2 9
+#define NOTE_F2 9
+#define NOTE_FS2 10
+#define NOTE_G2 10
+#define NOTE_GS2 11
+#define NOTE_A2 12
+#define NOTE_AS2 12
+#define NOTE_B2 13
+#define NOTE_C3 14
+#define NOTE_CS3 15
+#define NOTE_D3 16
+#define NOTE_DS3 17
+#define NOTE_E3 18
+#define NOTE_F3 19
+#define NOTE_FS3 20
+#define NOTE_G3 21
+#define NOTE_GS3 22
+#define NOTE_A3 23
+#define NOTE_AS3 25
+#define NOTE_B3 26
+#define NOTE_C4 28
+#define NOTE_CS4 30
+#define NOTE_D4 31
+#define NOTE_DS4 33
+#define NOTE_E4 35
+#define NOTE_F4 37
+#define NOTE_FS4 39
+#define NOTE_G4 42
+#define NOTE_GS4 44
+#define NOTE_A4 47
+#define NOTE_AS4 50
+#define NOTE_B4 53
+#define NOTE_C5 56
+#define NOTE_CS5 59
+#define NOTE_D5 63
+#define NOTE_DS5 66
+#define NOTE_E5 70
+#define NOTE_F5 75
+#define NOTE_FS5 79
+#define NOTE_G5 84
+#define NOTE_GS5 89
+#define NOTE_A5 94
+#define NOTE_AS5 99
+#define NOTE_B5 105
+#define NOTE_C6 112
+#define NOTE_CS6 118
+#define NOTE_D6 125
+#define NOTE_DS6 133
+#define NOTE_E6 141
+#define NOTE_F6 149
+#define NOTE_FS6 158
+#define NOTE_G6 167
+#define NOTE_GS6 177
+#define NOTE_A6 188
+#define NOTE_AS6 199
+#define NOTE_B6 211
+#define NOTE_C7 223
+#define NOTE_CS7 237
+#define NOTE_D7 251
+#define NOTE_DS7 265
+#define NOTE_E7 281
+#define NOTE_F7 298
+#define NOTE_FS7 316
+#define NOTE_G7 335
+#define NOTE_GS7 354
+#define NOTE_A7 375
+#define NOTE_AS7 398
+#define NOTE_B7 421
+#define NOTE_C8 447
+
 
 #define RYTHM_PIN A2
 #define NO_MUSIC_DELAY_IN_MS 1000
 #define SIZE_OF_LUT 4 //lookup table size 
 #define DELAY_UPDATE_TICK_IN_MS 125
 
-//counter_step = 1000 * Nech * (Fsig/Fpwm) = 1000 * Nech * (Fsig/(Fcpu/256))
-#define CONVERT_FREQ_TO_COUNTER(NOTE_FREQ) \
- ( (uint16_t)((uint32_t)(NOTE_FREQ) * 1000UL * (uint32_t)(SIZE_OF_LUT) * 256UL / (uint32_t)(F_CPU)) )
+
 
 const uint8_t square50LUT[SIZE_OF_LUT]= {
 
@@ -124,7 +123,7 @@ Voice thirdVoice;
 // notes in the melody:
 const int melody[] PROGMEM = {
 
-  NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
+  NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4, NOTE_C4
 };
 
 // note Durations: 4 = DELAY_UPDATE_TICK_IN_MS * 4 ~= 248 ~= quarter note (Crotchet),
@@ -133,7 +132,7 @@ const int melody[] PROGMEM = {
   
 const uint8_t noteDurations[] PROGMEM = {
 
-  4, 2, 2, 4, 4, 4, 4, 4 //Duration: 28
+  4, 2, 2, 4, 4, 4, 4, 4, 4  //Duration: 28
 };
 
 // notes in the bassline:
@@ -158,10 +157,10 @@ const uint8_t chordDurations[] PROGMEM = {
   8, 2, 6, 4, 8}; //Duration: 28
 
 
-void initVoice(Voice * voice, uint16_t note_freq){ 
+void initVoice(Voice * voice, uint8_t counter_step){ 
   voice->index = 0;
   voice->counter = 0; 
-  voice->counter_step = CONVERT_FREQ_TO_COUNTER(note_freq);
+  voice->counter_step = counter_step;
 }
 
 int main(void) {
@@ -240,21 +239,21 @@ int main(void) {
 
       while(melodyNote < 8){
         if (melodyTempoCounter  % melodyNoteDuration ==0 ){
-          uint16_t notePitch =pgm_read_word(&melody[melodyNote]);
+          uint8_t notePitch =pgm_read_byte(&melody[melodyNote]);
           melodyNoteDuration =pgm_read_byte(&noteDurations[melodyNote]);
           initVoice(&simpleVoice, notePitch);
           melodyTempoCounter = 0;
           melodyNote++;
         }
         if (basslineTempoCounter % basslineNoteDuration ==0 ){
-          uint16_t notePitch =pgm_read_word(&melody[basslineNote]);
+          uint8_t notePitch =pgm_read_byte(&melody[basslineNote]);
           basslineNoteDuration =pgm_read_byte(&noteDurations[basslineNote]);
           initVoice(&otherVoice, notePitch);
           basslineTempoCounter = 0;
           basslineNote++;
         }
         if (chordTempoCounter % chordNoteDuration == 0){
-          uint16_t notePitch =pgm_read_word(&chord[chordNote]);
+          uint8_t notePitch =pgm_read_byte(&chord[chordNote]);
           basslineNoteDuration =pgm_read_byte(&chordDurations[chordNote]);
           initVoice(&thirdVoice, notePitch);
           chordTempoCounter = 0;
