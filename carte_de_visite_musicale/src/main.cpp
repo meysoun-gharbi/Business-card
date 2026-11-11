@@ -118,16 +118,25 @@
 
 #define NB_OF_VOICES 3
 
+#if defined (ARDUINO_AVR_ATTINY13)
 const uint8_t precalculated_counter [] PROGMEM = {
   112, 118, 125, 133, 141, 149, 158, 167, 177, 188, 199, 211,
 };
+
+#elif defined (ARDUINO_AVR_ATTINYX5)
+
+const uint8_t precalculated_counter [] PROGMEM = {
+  134, 142, 150, 159, 169, 179, 188, 201, 213, 225, 239, 253,
+};
+
+#else 
+# error "Board not supported yest. Supported boards are ATtiny13, ATtiny13A, ATtiny25, ATtiny45, ATtiny85 "
+# endif
 
 const uint8_t square50LUT[SIZE_OF_LUT]= {
 
   0, 0, 85, 85
 };
-
-
 typedef struct 
 {
   uint8_t index;
@@ -239,8 +248,11 @@ int main(void) {
 
 
   //Enable the overflow interrupt
+#if defined (ARDUINO_AVR_ATTINY13)
   TIMSK0 |= _BV(TOIE0);
-
+#elif defined (ARDUINO_AVR_ATTINYX5)
+  TIMSK |= _BV(TOIE0);
+#endif
   //start the timer
   TCCR0A = 0b10000011; 
  
